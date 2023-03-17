@@ -66,6 +66,7 @@ public class SessionBuilder {
 	private String mOrigin = null;
 	private String mDestination = null;
 	private Session.Callback mCallback = null;
+	private String mGPSMetadata = null;
 
 	// Removes the default public constructor
 	private SessionBuilder() {}
@@ -99,29 +100,31 @@ public class SessionBuilder {
 		//session.setDestination(mDestination);
 		session.setTimeToLive(mTimeToLive);
 		session.setCallback(mCallback);
+		if(mGPSMetadata!=null)
+			session.setGpsMetadata(mGPSMetadata);
 
 		switch (mAudioEncoder) {
-		case AUDIO_AAC:
-			AACStream stream = new AACStream();
-			session.addAudioTrack(stream);
-			if (mContext!=null) 
-				stream.setPreferences(PreferenceManager.getDefaultSharedPreferences(mContext));
-			break;
-		case AUDIO_AMRNB: //NOT UPDATED
-			session.addAudioTrack(new AMRNBStream());
-			break;
+			case AUDIO_AAC:
+				AACStream stream = new AACStream();
+				session.addAudioTrack(stream);
+				if (mContext!=null)
+					stream.setPreferences(PreferenceManager.getDefaultSharedPreferences(mContext));
+				break;
+			case AUDIO_AMRNB: //NOT UPDATED
+				session.addAudioTrack(new AMRNBStream());
+				break;
 		}
 
 		switch (mVideoEncoder) {
-		case VIDEO_H263: //NOT UPDATED
-			session.addVideoTrack(new H263Stream(0));
-			break;
-		case VIDEO_H264:
-			H264Stream stream = new H264Stream();
-			if (mContext!=null) 
-				stream.setPreferences(PreferenceManager.getDefaultSharedPreferences(mContext));
-			session.addVideoTrack(stream);
-			break;
+			case VIDEO_H263: //NOT UPDATED
+				session.addVideoTrack(new H263Stream(0));
+				break;
+			case VIDEO_H264:
+				H264Stream stream = new H264Stream();
+				if (mContext!=null)
+					stream.setPreferences(PreferenceManager.getDefaultSharedPreferences(mContext));
+				session.addVideoTrack(stream);
+				break;
 		}
 
 		if (session.getVideoTrack()!=null) {
@@ -144,6 +147,12 @@ public class SessionBuilder {
 	 * Access to the context is needed for the H264Stream class to store some stuff in the SharedPreferences.
 	 * Note that you should pass the Application context, not the context of an Activity.
 	 **/
+
+	public SessionBuilder setGPSMetadata(String meta) {
+		mGPSMetadata = meta;
+		return this;
+	}
+
 	public SessionBuilder setContext(Context context) {
 		mContext = context;
 		return this;
@@ -204,6 +213,8 @@ public class SessionBuilder {
 		mCallback = callback;
 		return this;
 	}
+
+	public String getLocationMeta(){return mGPSMetadata;}
 	
 	/** Returns the context set with {@link #setContext(Context)}*/
 	public Context getContext() {
@@ -258,7 +269,8 @@ public class SessionBuilder {
 		.setAudioEncoder(mAudioEncoder)
 		.setAudioQuality(mAudioQuality)
 		.setContext(mContext)
-		.setCallback(mCallback);
+		.setCallback(mCallback)
+		.setGPSMetadata(mGPSMetadata);
 	}
 
 }

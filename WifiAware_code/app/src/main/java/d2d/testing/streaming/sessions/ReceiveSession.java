@@ -1,12 +1,12 @@
 package d2d.testing.streaming.sessions;
 
+import static java.util.UUID.randomUUID;
+
 import android.net.Network;
 import android.os.HandlerThread;
 
 import java.io.IOException;
 import java.net.InetAddress;
-
-import static java.util.UUID.randomUUID;
 
 public class ReceiveSession {
 
@@ -26,6 +26,8 @@ public class ReceiveSession {
 
     private Network mReceiveNet;
 
+    private String mGpsMetadata;
+
 
     /**
      * Creates a streaming session that can be customized by adding tracks.
@@ -37,7 +39,7 @@ public class ReceiveSession {
         thread.start();
 
         mSessionID = randomUUID().toString();
-        path = "";
+        path = mGpsMetadata = "";
         mReceiveNet = null;
     }
 
@@ -98,6 +100,12 @@ public class ReceiveSession {
         return mDestination;
     }
 
+    public void setGpsMetadata(String mGpsMetadata) {
+        this.mGpsMetadata = mGpsMetadata;
+    }
+    public String getGpsMetadata() {
+        return mGpsMetadata;
+    }
 
     /**
      * Asynchronously starts all streams of the session.

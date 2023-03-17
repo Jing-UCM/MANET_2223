@@ -18,17 +18,18 @@
 
 package d2d.testing.streaming.sessions;
 
-import android.hardware.Camera.CameraInfo;
+import static java.util.UUID.randomUUID;
+
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
 
+import d2d.testing.gui.GPSMetadata;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
 import d2d.testing.streaming.audio.AudioStream;
@@ -36,12 +37,9 @@ import d2d.testing.streaming.exceptions.CameraInUseException;
 import d2d.testing.streaming.exceptions.ConfNotSupportedException;
 import d2d.testing.streaming.exceptions.InvalidSurfaceException;
 import d2d.testing.streaming.exceptions.StorageUnavailableException;
-import d2d.testing.streaming.gl.SurfaceView;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.video.VideoStream;
-
-import static java.util.UUID.randomUUID;
 
 /**
  * You should instantiate this class with the {@link SessionBuilder}.<br />
@@ -113,6 +111,10 @@ public class Session {
 	public final String mSessionID;
 	public String mStreamingName;
 
+	//*****
+	private String mGpsMetadata = null;
+	//******
+
 	private AudioStream mAudioStream = null;
 	private VideoStream mVideoStream = null;
 
@@ -183,6 +185,7 @@ public class Session {
 
 	}
 
+
 	/** You probably don't need to use that directly, use the {@link SessionBuilder}. */
 	void addAudioTrack(AudioStream track) {
 		removeAudioTrack();
@@ -219,7 +222,15 @@ public class Session {
 	/** Returns the underlying {@link VideoStream} used by the {@link Session}. */
 	public VideoStream getVideoTrack() {
 		return mVideoStream;
-	}	
+	}
+
+
+	//*****
+	public void setGpsMetadata(String gpsMetadata) {
+		this.mGpsMetadata = gpsMetadata;
+	}
+	//*****
+
 
 	/**
 	 * Sets the callback interface that will be called by the {@link Session}.
@@ -318,12 +329,16 @@ public class Session {
 		}
 		sessionDescription.append("v=0\r\n");
 		// TODO: Add IPV6 support
-		if(mOriginIPv6) sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP6 "+mOrigin.getHostAddress()+"\r\n");
-		else sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin.getHostAddress()+"\r\n");
+		if(mOriginIPv6)
+			sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP6 "+mOrigin.getHostAddress()+"\r\n");
+		else
+			sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin.getHostAddress()+"\r\n");
 		sessionDescription.append("s="+ mStreamingName + "\r\n");
 		sessionDescription.append("i=N/A\r\n");
-		if(mDestIPv6) sessionDescription.append("c=IN IP6 "+mDestination.getHostAddress()+"\r\n");
-		else sessionDescription.append("c=IN IP4 "+mDestination.getHostAddress()+"\r\n");
+		if(mDestIPv6)
+			sessionDescription.append("c=IN IP6 "+mDestination.getHostAddress()+"\r\n");
+		else
+			sessionDescription.append("c=IN IP4 "+mDestination.getHostAddress()+"\r\n");
 		// t=0 0 means the session is permanent (we don't know when it will stop)
 		sessionDescription.append("t=0 0\r\n");
 		sessionDescription.append("a=recvonly\r\n");
@@ -336,6 +351,14 @@ public class Session {
 			sessionDescription.append(mVideoStream.getSessionDescription());
 			sessionDescription.append("a=control:trackID="+1+"\r\n");
 		}
+
+		//**********************
+		// Create a new custom metadata attribute
+		if(mGpsMetadata!=null){
+			String customAttribute = "a=my-custom-metadata:" + mGpsMetadata + "\r\n";
+			sessionDescription.append(customAttribute);
+		}
+
 		return sessionDescription.toString();
 	}
 

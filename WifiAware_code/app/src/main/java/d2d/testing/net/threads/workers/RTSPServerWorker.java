@@ -119,12 +119,12 @@ public class RTSPServerWorker extends AbstractWorker {
         Session requestSession = mSessions.get(channel);
         ReceiveSession receiveSession = null;
         Map<UUID, Streaming> streamings = mServerSessions.get(channel);
+
         if(streamings == null){
             streamings = new HashMap<>();
             mServerSessions.put(channel, streamings);
         }
         else if(!request.path.isEmpty()){
-
             Streaming streaming = streamings.get(UUID.fromString(request.path));
             if(streaming != null){
                 receiveSession = streaming.getReceiveSession();
@@ -132,7 +132,6 @@ public class RTSPServerWorker extends AbstractWorker {
         }
         RebroadcastSession rebroadcastSession = mRebroadcastSessions.get(channel);
         RtspResponse response = new RtspResponse(request);
-
 
         //Ask for authorization unless this is an OPTIONS request
         if(!isAuthorized(request) && !request.method.equalsIgnoreCase("OPTIONS"))
@@ -150,6 +149,8 @@ public class RTSPServerWorker extends AbstractWorker {
                 case "DESCRIBE":
                     return DESCRIBE(request, channel);
                 case "ANNOUNCE":
+                    //Aquí es donde se recibe el custom metadata
+                    //Cliente debe anunciar primero la uri al server
                     return ANNOUNCE(request, channel);
                 case "SETUP":
                     if(requestSession != null) {
@@ -696,6 +697,10 @@ public class RTSPServerWorker extends AbstractWorker {
 
         final Pattern regexAudioDescription = Pattern.compile("m=audio (\\S+)",Pattern.CASE_INSENSITIVE);
         final Pattern regexVideoDescription = Pattern.compile("m=video (\\S+)",Pattern.CASE_INSENSITIVE);
+
+        //Patrón del custom rtsp header
+        final Pattern regexCustomMeta = Pattern.compile("a=my-custom-metadata:(.+)",Pattern.CASE_INSENSITIVE);
+
         final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
         Matcher matcher;
@@ -712,6 +717,18 @@ public class RTSPServerWorker extends AbstractWorker {
                 TrackInfo trackInfo = new TrackInfo();
                 trackInfo.setSessionDescription(line +"\r\n"+ reader.readLine() +"\r\n"+ reader.readLine() +"\r\n");
                 session.addVideoTrack(trackInfo);
+            }
+
+            //*******************
+
+            if(regexCustomMeta.matcher(line).find()){
+                matcher = regexCustomMeta.matcher(line);
+                // Extract the substring after the colon
+                String metadata = line.substring(line.indexOf(":") + 1);
+                if(metadata!=null){
+                    session.setGpsMetadata(metadata);
+                    Log.d(TAG, "handleServerRequest: Hopefully GPS location = " + metadata);
+                }
             }
 
             matcher = pattern.matcher(line);
