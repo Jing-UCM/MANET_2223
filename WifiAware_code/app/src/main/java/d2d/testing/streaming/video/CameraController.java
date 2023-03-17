@@ -1,23 +1,36 @@
 package d2d.testing.streaming.video;
 
+import static android.content.Context.LOCATION_SERVICE;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.CamcorderProfile;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.util.Size;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,12 +47,14 @@ public class CameraController {
         void cameraClosed();
     }
 
-
     private static CameraController INSTANCE = null;
+
+    private static Context context;
 
     public static void initiateInstance(Context ctx){
         if(INSTANCE == null){
             INSTANCE = new CameraController(ctx);
+            context = ctx;
         }
     }
 
@@ -58,6 +73,9 @@ public class CameraController {
     private CaptureRequest.Builder mCaptureBuilder;
     private CameraCaptureSession mCaptureSession;
 
+    public Location getDeviceLocation(){
+        return getLastKnownLocation();
+    }
 
     private final CameraDevice.StateCallback mCamStCallback = new CameraDevice.StateCallback() {
         @Override
@@ -93,15 +111,69 @@ public class CameraController {
 
     public CameraDevice getCameraDevice() { return mCameraDevice;}
 
+
+    CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+            super.onCaptureCompleted(session, request, result);
+            Location ret_loc = (Location) result.get(TotalCaptureResult.JPEG_GPS_LOCATION);
+            if(ret_loc!=null)
+                Log.d("captureCallback", "onCaptureCompleted: " + ret_loc.getLatitude() + ", " + ret_loc.getLongitude());
+        }
+
+        @Override
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureResult partialResult) {
+            super.onCaptureProgressed(session, request, partialResult);
+        }
+    };
+
+
+
+    private LocationManager mLocationManager;
+
+    private Location getLastKnownLocation() {
+        mLocationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+
+        Location bestLocation = null;
+
+        for (String provider : providers) {
+
+            @SuppressLint("MissingPermission") Location l = mLocationManager.getLastKnownLocation(provider);
+            if (l != null)
+                if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                    bestLocation = l;
+                }
+        }
+        return bestLocation;
+    }
+
+    private void setupLocationConfig(){
+        Location loc = getLastKnownLocation();
+
+        Location ret_loc = mCaptureBuilder.get(CaptureRequest.JPEG_GPS_LOCATION);
+        mCaptureBuilder.set(CaptureRequest.JPEG_GPS_LOCATION, loc);
+        Location ret_loc_af = mCaptureBuilder.get(CaptureRequest.JPEG_GPS_LOCATION);
+
+        mCaptureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+        Log.d("CameraController", "onConfigured: GPS antes" + ret_loc);
+        Log.d("CameraController", "onConfigured: GPS despues" + ret_loc_af);
+    }
+
+
     private final CameraCaptureSession.StateCallback mCamSessionStCallback = new CameraCaptureSession.StateCallback() {
         @Override
         public void onConfigured(@NonNull CameraCaptureSession session) {
             mCaptureSession = session;
             mCaptureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
 
+            setupLocationConfig();
+
             try {
                 //request endlessly repeating capture of images by this capture session
-                mCaptureSession.setRepeatingRequest(mCaptureBuilder.build(), null, mCallbackHandler);
+                //Changed callback from null to captureCallback
+                mCaptureSession.setRepeatingRequest(mCaptureBuilder.build(), captureCallback, mCallbackHandler);
                 for(Callback cb : mListeners){
                     cb.cameraStarted();
                 }
@@ -135,7 +207,6 @@ public class CameraController {
             return mCamManager.getCameraIdList();
         } catch (CameraAccessException e) {return new String[0];}
     }
-
 
     public <T> Size[] getCameraOutputSizes(String cameraId, Class<T> klass){
         try{
