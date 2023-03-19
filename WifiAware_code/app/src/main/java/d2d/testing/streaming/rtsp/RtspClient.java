@@ -18,6 +18,13 @@
 
 package d2d.testing.streaming.rtsp;
 
+import static d2d.testing.gui.main.RTSPRequest.ANNOUNCE_REQUEST;
+import static d2d.testing.gui.main.RTSPRequest.AUTH_ANNOUNCE_REQUEST;
+import static d2d.testing.gui.main.RTSPRequest.OPTIONS_REQUEST;
+import static d2d.testing.gui.main.RTSPRequest.RECORD_REQUEST;
+import static d2d.testing.gui.main.RTSPRequest.SETUP_REQUEST;
+import static d2d.testing.gui.main.RTSPRequest.TEARDOWN_REQUEST;
+
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -39,12 +46,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -53,6 +57,7 @@ import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import d2d.testing.gui.main.RTSPRequest;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
@@ -110,7 +115,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 	private final static int MAX_NETWORK_REQUESTS = 100;
 
-	private class Parameters {
+	public static class Parameters {
 		public String host;
 		public String username;
 		public String password;
@@ -132,7 +137,7 @@ public class RtspClient implements StreamingRecordObserver {
 		}
 	}
 
-	private class StreamingState{
+	public class StreamingState{
 		public int mCSeq;
 		public String mSessionID;
 		public String mAuthorization;
@@ -661,12 +666,16 @@ public class RtspClient implements StreamingRecordObserver {
 	//IllegalStateException fallo en protocolo o configuracion de cliente
 	//
 	private void sendRequestAnnounce(StreamingState st, String path, String sessionDesc) throws SecurityException, IOException, IllegalStateException, RuntimeException{
-		String body = sessionDesc;
-		String request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
-				"CSeq: " + (++st.mCSeq) + "\r\n" +
-				"Content-Length: " + body.length() + "\r\n" +
-				"Content-Type: application/sdp\r\n\r\n" +
-				body;
+
+		RTSPRequest req = new RTSPRequest.Builder(ANNOUNCE_REQUEST)
+				.setStreamingState(st)
+				.setParameters(mParameters)
+				.setPath(path)
+				.setBody(sessionDesc)
+				.build();
+
+		String request = req.toString();
+
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 
 		mOutputStream.write(request.getBytes("UTF-8"));
@@ -703,20 +712,16 @@ public class RtspClient implements StreamingRecordObserver {
 				throw new IllegalStateException("Invalid response from server");
 			}
 
-			String uri = "rtsp://"+mParameters.host+":"+mParameters.port+"/"+path;
-			String hash1 = computeMd5Hash(mParameters.username+":"+m.group(1)+":"+mParameters.password);
-			String hash2 = computeMd5Hash("ANNOUNCE"+":"+uri);
-			String hash3 = computeMd5Hash(hash1+":"+m.group(2)+":"+hash2);
+			req = new RTSPRequest.Builder(AUTH_ANNOUNCE_REQUEST)
+					.setStreamingState(st)
+					.setParameters(mParameters)
+					.setPath(path)
+					.setBody(sessionDesc)
+					.setNonce(nonce)
+					.setRealm(realm)
+					.build();
 
-			st.mAuthorization = "Digest username=\""+mParameters.username+"\",realm=\""+realm+"\",nonce=\""+nonce+"\",uri=\""+uri+"\",response=\""+hash3+"\"";
-
-			request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
-					"CSeq: " + (++st.mCSeq) + "\r\n" +
-					"Content-Length: " + body.length() + "\r\n" +
-					"Authorization: " + st.mAuthorization + "\r\n" +
-					"Session: " + st.mSessionID + "\r\n" +
-					"Content-Type: application/sdp\r\n\r\n" +
-					body;
+			request = req.toString();
 
 			Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 
@@ -737,11 +742,16 @@ public class RtspClient implements StreamingRecordObserver {
 	 */
 	private void sendRequestSetup(StreamingState st, String path, Stream stream, int trackNo) throws IllegalStateException, IOException {
 		if (stream != null) {
-			String params = mParameters.transport==TRANSPORT_TCP ?
-					("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1)) : ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
-			String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+"/trackID="+trackNo+" RTSP/1.0\r\n" +
-					"Transport: RTP/AVP/"+params+"\r\n" +
-					addHeaders(st);
+
+			RTSPRequest req = new RTSPRequest.Builder(SETUP_REQUEST)
+					.setStreamingState(st)
+					.setParameters(mParameters)
+					.setPath(path)
+					.setTrackNo(trackNo)
+					.build();
+
+			String request = req.toString();
+
 
 			Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 
@@ -781,11 +791,15 @@ public class RtspClient implements StreamingRecordObserver {
 	 */
 	private void sendRequestSetup(StreamingState st, String path, RebroadcastSession session, int trackNo) throws IllegalStateException, IOException {
 		if (session.serverTrackExists(trackNo)) {
-			String params = mParameters.transport==TRANSPORT_TCP ?
-					("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1)) : ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
-			String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+"/trackID="+trackNo+" RTSP/1.0\r\n" +
-					"Transport: RTP/AVP/"+params+"\r\n" +
-					addHeaders(st);
+
+			RTSPRequest req = new RTSPRequest.Builder(SETUP_REQUEST)
+					.setStreamingState(st)
+					.setParameters(mParameters)
+					.setPath(path)
+					.setTrackNo(trackNo)
+					.build();
+
+			String request = req.toString();
 
 			Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 
@@ -825,12 +839,20 @@ public class RtspClient implements StreamingRecordObserver {
 	 * Forges and sends the RECORD request
 	 */
 	private void sendRequestRecord(StreamingState st, String path) throws IOException, RuntimeException{
-		String request = "RECORD rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
-				"Range: npt=0.000-\r\n" +
-				addHeaders(st);
+
+		RTSPRequest req = new RTSPRequest.Builder(RECORD_REQUEST)
+				.setStreamingState(st)
+				.setParameters(mParameters)
+				.setPath(path)
+				.build();
+
+		String request = req.toString();
+
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
+
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
+
 		Response response =  Response.parseResponse(mBufferedReader);
 		if (response.status == 403) {
 			Log.d(TAG, "Streaming " + path + " refused by server");
@@ -842,7 +864,15 @@ public class RtspClient implements StreamingRecordObserver {
 	 * Forges and sends the TEARDOWN request
 	 */
 	private void sendRequestTeardown(StreamingState st, String path) throws IOException {
-		String request = "TEARDOWN rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
+
+		RTSPRequest req = new RTSPRequest.Builder(TEARDOWN_REQUEST)
+				.setStreamingState(mLocalStreamingState)
+				.setParameters(mParameters)
+				.setPath(path)
+				.build();
+
+		String request = req.toString();
+
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
@@ -853,7 +883,15 @@ public class RtspClient implements StreamingRecordObserver {
 	 * Forges and sends the OPTIONS request
 	 */
 	private void sendRequestOption(StreamingState st, String path) throws IOException {
-		String request = "OPTIONS rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
+
+		RTSPRequest req = new RTSPRequest.Builder(OPTIONS_REQUEST)
+				.setStreamingState(st)
+				.setParameters(mParameters)
+				.setPath(path)
+				.build();
+
+		String request = req.toString();
+
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
@@ -890,30 +928,6 @@ public class RtspClient implements StreamingRecordObserver {
 			}
 		}
 	};
-
-	final protected static char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
-
-	private static String bytesToHex(byte[] bytes) {
-		char[] hexChars = new char[bytes.length * 2];
-		int v;
-		for ( int j = 0; j < bytes.length; j++ ) {
-			v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
-
-	/** Needed for the Digest Access Authentication. */
-	private String computeMd5Hash(String buffer) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-			return bytesToHex(md.digest(buffer.getBytes("UTF-8")));
-		} catch (NoSuchAlgorithmException ignore) {
-		} catch (UnsupportedEncodingException e) {}
-		return "";
-	}
 
 	private void postMessage(final int message) {
 		mMainHandler.post(new Runnable() {
