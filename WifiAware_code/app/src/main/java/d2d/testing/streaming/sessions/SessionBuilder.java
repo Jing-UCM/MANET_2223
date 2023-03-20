@@ -68,6 +68,7 @@ public class SessionBuilder {
 	private Session.Callback mCallback = null;
 	private String mGPSMetadata = null;
 
+	private boolean mSsMode;
 	// Removes the default public constructor
 	private SessionBuilder() {}
 
@@ -102,6 +103,8 @@ public class SessionBuilder {
 		session.setCallback(mCallback);
 		if(mGPSMetadata!=null)
 			session.setGpsMetadata(mGPSMetadata);
+
+		session.setSessionMode(mSsMode);
 
 		switch (mAudioEncoder) {
 			case AUDIO_AAC:
@@ -273,4 +276,8 @@ public class SessionBuilder {
 		.setGPSMetadata(mGPSMetadata);
 	}
 
+	public SessionBuilder setSharedSecretMode(boolean ssMode) {
+		mSsMode = ssMode;
+		return this;
+	}
 }

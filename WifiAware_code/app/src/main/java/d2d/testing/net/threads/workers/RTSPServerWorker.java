@@ -700,6 +700,7 @@ public class RTSPServerWorker extends AbstractWorker {
 
         //Patrón del custom rtsp header
         final Pattern regexCustomMeta = Pattern.compile("a=my-custom-metadata:(.+)",Pattern.CASE_INSENSITIVE);
+        final Pattern regexCustomSS = Pattern.compile("a=shared-secret:(.+)",Pattern.CASE_INSENSITIVE);
 
         final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
@@ -728,6 +729,25 @@ public class RTSPServerWorker extends AbstractWorker {
                 if(metadata!=null){
                     session.setGpsMetadata(metadata);
                     Log.d(TAG, "handleServerRequest: Hopefully GPS location = " + metadata);
+                }
+            }
+
+            if(regexCustomSS.matcher(line).find()){
+                matcher = regexCustomMeta.matcher(line);
+                // Extract the substring after the colon
+                String ssServerhash = line.substring(line.indexOf(":") + 1);
+                if(ssServerhash!=null){
+                    String localSecret = "1234";
+                    String localHexHash = Sha256.hash(localSecret);
+                    boolean sharedSecret = localHexHash.equals(ssServerhash);
+                    if(sharedSecret){
+                        Log.d(TAG, "handleServerRequest: SAME HASH!!");
+                        session.setSharedSecret(sharedSecret);
+                    }
+                    else{
+                        Log.d(TAG, "handleServerRequest: NOT THE SAME HASH!!");
+                        session.setSharedSecret(sharedSecret);
+                    }
                 }
             }
 

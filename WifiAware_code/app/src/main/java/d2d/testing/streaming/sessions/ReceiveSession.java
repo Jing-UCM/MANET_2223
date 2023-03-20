@@ -28,6 +28,8 @@ public class ReceiveSession {
 
     private String mGpsMetadata;
 
+    private boolean mSharedSecret;
+
 
     /**
      * Creates a streaming session that can be customized by adding tracks.
@@ -40,6 +42,7 @@ public class ReceiveSession {
 
         mSessionID = randomUUID().toString();
         path = mGpsMetadata = "";
+        mSharedSecret = false;
         mReceiveNet = null;
     }
 
@@ -103,6 +106,16 @@ public class ReceiveSession {
     public void setGpsMetadata(String mGpsMetadata) {
         this.mGpsMetadata = mGpsMetadata;
     }
+
+    public void setSharedSecret(boolean mSharedSecret) {
+        this.mSharedSecret = mSharedSecret;
+    }
+
+    public boolean getSharedSecret() {
+        return mSharedSecret;
+    }
+
+
     public String getGpsMetadata() {
         return mGpsMetadata;
     }

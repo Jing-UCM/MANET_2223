@@ -30,6 +30,7 @@ import java.net.UnknownHostException;
 import java.util.UUID;
 
 import d2d.testing.gui.GPSMetadata;
+import d2d.testing.net.threads.workers.Sha256;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
 import d2d.testing.streaming.audio.AudioStream;
@@ -113,6 +114,8 @@ public class Session {
 
 	//*****
 	private String mGpsMetadata = null;
+
+	private boolean mSsMode;
 	//******
 
 	private AudioStream mAudioStream = null;
@@ -138,6 +141,8 @@ public class Session {
 		mTimestamp = (uptime/1000)<<32 & (((uptime-((uptime/1000)*1000))>>32)/1000); // NTP timestamp
 		mSessionID = randomUUID().toString();
 	}
+
+
 
 	/**
 	 * The callback interface you need to implement to get some feedback
@@ -228,6 +233,10 @@ public class Session {
 	//*****
 	public void setGpsMetadata(String gpsMetadata) {
 		this.mGpsMetadata = gpsMetadata;
+	}
+
+	public void setSessionMode(boolean ssMode) {
+		mSsMode = ssMode;
 	}
 	//*****
 
@@ -355,8 +364,14 @@ public class Session {
 		//**********************
 		// Create a new custom metadata attribute
 		if(mGpsMetadata!=null){
-			String customAttribute = "a=my-custom-metadata:" + mGpsMetadata + "\r\n";
-			sessionDescription.append(customAttribute);
+			String customAttributeMetadata = "a=my-custom-metadata:" + mGpsMetadata + "\r\n";
+			sessionDescription.append(customAttributeMetadata);
+		}
+
+		if (mSsMode){
+			//SHA256 of 1234
+			String customAttributeSS = "a=shared-secret:" + Sha256.hash("1234") + "\r\n";
+			sessionDescription.append(customAttributeSS);
 		}
 
 		return sessionDescription.toString();

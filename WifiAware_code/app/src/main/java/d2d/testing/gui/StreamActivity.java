@@ -85,6 +85,10 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         Location loc = getLastKnownLocation();
         GPSMetadata gpsmeta = loc!=null? new GPSMetadata(loc): new GPSMetadata();
 
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean ssMode = preferences.getBoolean("sharedSecretSwitch", false);
+
+
         // Configures the SessionBuilder
         mSessionBuilder = SessionBuilder.getInstance()
                 .setPreviewOrientation(90)
@@ -92,6 +96,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
                 .setAudioEncoder(SessionBuilder.AUDIO_AAC)
                 .setVideoEncoder(SessionBuilder.VIDEO_H264)
                 .setVideoQuality(mVideoQuality)
+                .setSharedSecretMode(ssMode)
                 .setGPSMetadata(gpsmeta.toString());
 
         mTextureView.setSurfaceTextureListener(this);

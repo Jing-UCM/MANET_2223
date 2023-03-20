@@ -7,6 +7,21 @@
 			app:key="saveMyStreaming" app:title="Save my streaming" />
 
 	</PreferenceCategory>
+	<PreferenceCategory app:title="Shared Secret">
+		<SwitchPreference
+			app:key="sharedSecretSwitch"
+			app:title="Shared Secret Mode"/>
+
+
+<!--		<EditTextPreference-->
+<!--			app:key="sharedSecretInput"-->
+<!--			app:title="Write the secret code here"-->
+<!--			app:dialogTitle="Write the shared secret code"-->
+<!--			app:dialogMessage="Enter the URL for your streaming service"-->
+<!--			app:defaultValue="1234"/>-->
+
+
+	</PreferenceCategory>
 
 	<PreferenceCategory app:title="Panic preferences">
 

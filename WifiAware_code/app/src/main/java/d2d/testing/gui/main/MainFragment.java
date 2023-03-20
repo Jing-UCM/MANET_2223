@@ -152,13 +152,14 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         return this.streamList;
     }
 
-    public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download){
+    public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download, boolean sharedSecret){
         removeDefaultItemList();
         if(!ip.equals("0.0.0.0")) {
-            StreamDetail detail = new StreamDetail(uuid, name, ip, port, download);
+            StreamDetail detail = new StreamDetail(uuid, name, ip, port, download, sharedSecret);
             if (on_off) {
                 if (!streamList.contains(detail))
-                    streamList.add(detail);
+                    if(sharedSecret)
+                        streamList.add(detail);
             } else {
                 streamList.remove(detail);
             }
@@ -267,7 +268,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         streaming.getName(),
                         streaming.getReceiveSession().getDestinationAddress().toString(),
                         streaming.getReceiveSession().getDestinationPort(),
-                        streaming.isDownloading());
+                        streaming.isDownloading(),
+                        streaming.isSharedSecret());
             }
         });
     }
@@ -292,7 +294,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         streaming.getName(),
                         streaming.getReceiveSession().getDestinationAddress().toString(),
                         streaming.getReceiveSession().getDestinationPort(),
-                        streaming.isDownloading());
+                        streaming.isDownloading(),
+                        streaming.isSharedSecret());
             }
         });
     }

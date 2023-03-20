@@ -31,7 +31,6 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private static final int VIEW_TYPE_PLACEHOLDER = 1;
     private Context mContext;
     private ArrayList<StreamDetail> mStreams;
-    private StreamDetail sd;
     private MainFragment fragment;
 
     public StreamListAdapter(Context context , ArrayList<StreamDetail> objects, MainFragment fragment) {
@@ -62,10 +61,9 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         if(holder instanceof  RealViewHolder){
-            sd = mStreams.get(position);
+            final StreamDetail sd = mStreams.get(position);
 
             RealViewHolder realHolder = (RealViewHolder) holder;
-
 
             String[] desc = sd.getName().split("__");
             String name;

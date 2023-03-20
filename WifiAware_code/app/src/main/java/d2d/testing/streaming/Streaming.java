@@ -7,8 +7,8 @@ import d2d.testing.streaming.sessions.ReceiveSession;
 public class Streaming {
     private UUID mUUID;
     private String mName;
-
     private boolean isDownloading;
+    private boolean isSharedSecret;
     private ReceiveSession mReceiveSession;
 
     public Streaming(UUID id, String name, ReceiveSession receiveSession){
@@ -16,6 +16,7 @@ public class Streaming {
         mReceiveSession = receiveSession;
         mName = name;
         isDownloading = false;
+        isSharedSecret = receiveSession.getSharedSecret();
     }
 
     public UUID getUUID() {
@@ -40,5 +41,9 @@ public class Streaming {
 
     public void setDownloadState(boolean downloading) {
         isDownloading = downloading;
+    }
+
+    public boolean isSharedSecret() {
+        return isSharedSecret;
     }
 }
