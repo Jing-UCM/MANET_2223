@@ -20,6 +20,9 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import d2d.testing.gui.StreamActivity;
+import d2d.testing.gui.main.MainFragment;
+import d2d.testing.gui.main.WifiAwareViewModel;
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
@@ -737,16 +740,14 @@ public class RTSPServerWorker extends AbstractWorker {
                 // Extract the substring after the colon
                 String ssServerhash = line.substring(line.indexOf(":") + 1);
                 if(ssServerhash!=null){
-                    String localSecret = "1234";
-                    String localHexHash = Sha256.hash(localSecret);
-                    boolean sharedSecret = localHexHash.equals(ssServerhash);
+                    boolean sharedSecret = Sha256.check(MainFragment.ssCode, ssServerhash);
+                    session.setSharedSecretMode(true);
+                    session.setIsSharedSecret(sharedSecret);
                     if(sharedSecret){
                         Log.d(TAG, "handleServerRequest: SAME HASH!!");
-                        session.setSharedSecret(sharedSecret);
                     }
                     else{
                         Log.d(TAG, "handleServerRequest: NOT THE SAME HASH!!");
-                        session.setSharedSecret(sharedSecret);
                     }
                 }
             }
@@ -769,6 +770,7 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setPath(request.path);
         return session;
     }
+
 
     protected RebroadcastSession handleRebroadcastRequest(String path, Socket client) {
         //Buscar la serverSession que corresponde al path

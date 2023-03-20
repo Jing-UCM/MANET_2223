@@ -13,19 +13,19 @@ public class StreamDetail implements Parcelable {
     private String name;
     private int port;
     private boolean download;
-
-    private boolean sharedSecret;
-
+    private boolean isSharedSecretMode;
+    private boolean showSharedSecret;
     private SaveStream saveStream;
 
-    public StreamDetail(String uuid, String name, String ip, int port, boolean download, boolean sharedSecret){
+    public StreamDetail(String uuid, String name, String ip, int port, boolean download, boolean ssm, boolean sss){
         this.uuid = uuid;
         this.ip = ip;
         this.download = download;
         this.port = port;
         this.name = name;
         this.saveStream = null;
-        this.sharedSecret = sharedSecret;
+        this.isSharedSecretMode = ssm;
+        this.showSharedSecret = sss;
     }
 
     public String getUuid() {

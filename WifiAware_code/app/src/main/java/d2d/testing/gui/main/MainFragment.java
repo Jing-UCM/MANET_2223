@@ -3,6 +3,7 @@ package d2d.testing.gui.main;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,22 +45,27 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private  EditText myName;
     private TextView myMode;
     private TextView myStatus;
-
     private Button record;
     private WifiAwareViewModel mAwareModel;
-
     private TextView numStreams;
-
     private ArrayList<StreamDetail> streamList = new ArrayList();
     private StreamListAdapter arrayAdapter;
     private RecyclerView streamsListView;
-
     private Boolean isWifiAwareAvailable;
+    public static boolean ssMode = false;
+    public static String ssCode;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainFragment.this.getContext());
+        ssMode = preferences.getBoolean("sharedSecretSwitch", false);
+
+        if(ssMode){
+            ssCode = preferences.getString("sharedSecretInput", "1234");
+        }
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -85,6 +92,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 }
             }
         });
+
+//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainFragment.this.getContext());
+//        sharedSecretMode = preferences.getBoolean("sharedSecretSwitch", false);
 
         @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.animate_record);
         record.startAnimation(shake);
@@ -152,14 +162,25 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         return this.streamList;
     }
 
-    public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download, boolean sharedSecret){
+    public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download, boolean isSharedSecretMode, boolean showSharedSecret){
         removeDefaultItemList();
         if(!ip.equals("0.0.0.0")) {
-            StreamDetail detail = new StreamDetail(uuid, name, ip, port, download, sharedSecret);
+            StreamDetail detail = new StreamDetail(uuid, name, ip, port, download, isSharedSecretMode, showSharedSecret);
             if (on_off) {
                 if (!streamList.contains(detail))
-                    if(sharedSecret)
+                    if(MainFragment.ssMode){
+                        if(isSharedSecretMode){
+                            if(showSharedSecret){
+                                streamList.add(detail);
+                            }
+                        }
+                        else{
+                            streamList.add(detail);
+                        }
+                    }
+                    else if(!isSharedSecretMode){
                         streamList.add(detail);
+                    }
             } else {
                 streamList.remove(detail);
             }
@@ -269,6 +290,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         streaming.getReceiveSession().getDestinationAddress().toString(),
                         streaming.getReceiveSession().getDestinationPort(),
                         streaming.isDownloading(),
+                        streaming.ismSharedSecretMode(),
                         streaming.isSharedSecret());
             }
         });
@@ -295,6 +317,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         streaming.getReceiveSession().getDestinationAddress().toString(),
                         streaming.getReceiveSession().getDestinationPort(),
                         streaming.isDownloading(),
+                        streaming.ismSharedSecretMode(),
                         streaming.isSharedSecret());
             }
         });

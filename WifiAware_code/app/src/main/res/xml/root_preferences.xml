@@ -12,14 +12,12 @@
 			app:key="sharedSecretSwitch"
 			app:title="Shared Secret Mode"/>
 
-
-<!--		<EditTextPreference-->
-<!--			app:key="sharedSecretInput"-->
-<!--			app:title="Write the secret code here"-->
-<!--			app:dialogTitle="Write the shared secret code"-->
-<!--			app:dialogMessage="Enter the URL for your streaming service"-->
-<!--			app:defaultValue="1234"/>-->
-
+		<EditTextPreference
+			app:key="sharedSecretInput"
+			app:title="Write the secret code here"
+			app:dialogTitle="Secret Shared Code"
+			app:dialogMessage="The app will restart to save the changes"
+			app:defaultValue="1234"/>
 
 	</PreferenceCategory>
 

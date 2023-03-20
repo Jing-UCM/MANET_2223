@@ -1,6 +1,7 @@
 package d2d.testing.gui.main;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.text.LineBreaker;
 import android.os.UserHandle;
 import android.text.Html;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -33,10 +35,17 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private ArrayList<StreamDetail> mStreams;
     private MainFragment fragment;
 
+
     public StreamListAdapter(Context context , ArrayList<StreamDetail> objects, MainFragment fragment) {
         this.mStreams = objects;
         this.mContext = context;
         this.fragment = fragment;
+
+//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+//        boolean ssMode = preferences.getBoolean("sharedSecretSwitch", false);
+//        if(ssMode){
+//            ssCode = preferences.getString("sharedSecretInput", "1234");
+//        }
     }
 
     @NonNull

@@ -28,7 +28,8 @@ public class ReceiveSession {
 
     private String mGpsMetadata;
 
-    private boolean mSharedSecret;
+    private boolean mIsSharedSecret;
+    private boolean mSharedSecretMode;
 
 
     /**
@@ -42,7 +43,7 @@ public class ReceiveSession {
 
         mSessionID = randomUUID().toString();
         path = mGpsMetadata = "";
-        mSharedSecret = false;
+        mSharedSecretMode = mIsSharedSecret = false;
         mReceiveNet = null;
     }
 
@@ -107,14 +108,21 @@ public class ReceiveSession {
         this.mGpsMetadata = mGpsMetadata;
     }
 
-    public void setSharedSecret(boolean mSharedSecret) {
-        this.mSharedSecret = mSharedSecret;
+    public void setSharedSecretMode(boolean ssMode) {
+        this.mSharedSecretMode = ssMode;
     }
 
-    public boolean getSharedSecret() {
-        return mSharedSecret;
+    public boolean getSharedSecretMode() {
+        return mSharedSecretMode;
     }
 
+    public void setIsSharedSecret(boolean ss) {
+        this.mIsSharedSecret = ss;
+    }
+
+    public boolean isSharedSecret(){
+        return mIsSharedSecret;
+    }
 
     public String getGpsMetadata() {
         return mGpsMetadata;
@@ -178,4 +186,5 @@ public class ReceiveSession {
     public String getPath() {
         return path;
     }
+
 }

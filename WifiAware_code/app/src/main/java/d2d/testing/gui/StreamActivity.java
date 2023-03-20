@@ -48,22 +48,17 @@ import d2d.testing.streaming.video.VideoQuality;
 public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener {
 
     private final static String TAG = "StreamActivity";
-
     private AutoFitTextureView mTextureView;
-
     private SessionBuilder mSessionBuilder;
-
     private FloatingActionButton recordButton;
     public boolean mRecording = false;
-
-    //private TextView nViewers;
-
     private String mNameStreaming = "defaultName";
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
-
     private boolean isDownload;
-    CameraController ctrl;
 
+    public static boolean isSharedSecretMode = false;
+    public static String sharedSecretCode;
+    CameraController ctrl;
     private SaveStream saveStream;
 
     @Override
@@ -86,17 +81,22 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         GPSMetadata gpsmeta = loc!=null? new GPSMetadata(loc): new GPSMetadata();
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean ssMode = preferences.getBoolean("sharedSecretSwitch", false);
+        isSharedSecretMode = preferences.getBoolean("sharedSecretSwitch", false);
 
+        if(isSharedSecretMode){
+            sharedSecretCode = preferences.getString("sharedSecretInput", "1234");
+        }
 
         // Configures the SessionBuilder
+
         mSessionBuilder = SessionBuilder.getInstance()
                 .setPreviewOrientation(90)
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_AAC)
                 .setVideoEncoder(SessionBuilder.VIDEO_H264)
                 .setVideoQuality(mVideoQuality)
-                .setSharedSecretMode(ssMode)
+                .setSharedSecretMode(isSharedSecretMode)
+//                .setSecretSharedCode(sharedSecretCode)
                 .setGPSMetadata(gpsmeta.toString());
 
         mTextureView.setSurfaceTextureListener(this);

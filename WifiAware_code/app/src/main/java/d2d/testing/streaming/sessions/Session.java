@@ -30,6 +30,7 @@ import java.net.UnknownHostException;
 import java.util.UUID;
 
 import d2d.testing.gui.GPSMetadata;
+import d2d.testing.gui.main.MainFragment;
 import d2d.testing.net.threads.workers.Sha256;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
@@ -114,8 +115,8 @@ public class Session {
 
 	//*****
 	private String mGpsMetadata = null;
-
 	private boolean mSsMode;
+//	private String mSsCode;
 	//******
 
 	private AudioStream mAudioStream = null;
@@ -235,9 +236,14 @@ public class Session {
 		this.mGpsMetadata = gpsMetadata;
 	}
 
-	public void setSessionMode(boolean ssMode) {
+	public void setSsMode(boolean ssMode) {
 		mSsMode = ssMode;
 	}
+
+//	public void setSsCode(String code) {
+//		mSsCode = code;
+//	}
+
 	//*****
 
 
@@ -369,8 +375,7 @@ public class Session {
 		}
 
 		if (mSsMode){
-			//SHA256 of 1234
-			String customAttributeSS = "a=shared-secret:" + Sha256.hash("1234") + "\r\n";
+			String customAttributeSS = "a=shared-secret:" + Sha256.hash(MainFragment.ssCode) + "\r\n";
 			sessionDescription.append(customAttributeSS);
 		}
 

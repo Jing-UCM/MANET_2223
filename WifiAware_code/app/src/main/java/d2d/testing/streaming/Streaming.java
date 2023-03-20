@@ -2,6 +2,7 @@ package d2d.testing.streaming;
 
 import java.util.UUID;
 
+import d2d.testing.net.threads.workers.RTSPServerWorker;
 import d2d.testing.streaming.sessions.ReceiveSession;
 
 public class Streaming {
@@ -9,6 +10,7 @@ public class Streaming {
     private String mName;
     private boolean isDownloading;
     private boolean isSharedSecret;
+    private boolean mSharedSecretMode;
     private ReceiveSession mReceiveSession;
 
     public Streaming(UUID id, String name, ReceiveSession receiveSession){
@@ -16,7 +18,8 @@ public class Streaming {
         mReceiveSession = receiveSession;
         mName = name;
         isDownloading = false;
-        isSharedSecret = receiveSession.getSharedSecret();
+        isSharedSecret = receiveSession.isSharedSecret();
+        mSharedSecretMode = receiveSession.getSharedSecretMode();
     }
 
     public UUID getUUID() {
@@ -45,5 +48,8 @@ public class Streaming {
 
     public boolean isSharedSecret() {
         return isSharedSecret;
+    }
+    public boolean ismSharedSecretMode() {
+        return mSharedSecretMode;
     }
 }
